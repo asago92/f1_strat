@@ -75,7 +75,7 @@ st.write("### Race Strategy Results")
 st.dataframe(results_df)
 
 # Prepare data for the stacked bar chart
-st.write("### Tyre Usage Visualization (Stacked Bar Chart)")
+st.write("### Tyre Usage Visualization (Horizontal Stacked Bar Chart)")
 
 # Create a DataFrame for Plotly
 plotly_data = []
@@ -94,11 +94,11 @@ for i, row in results_df.iterrows():
 
 plotly_df = pd.DataFrame(plotly_data)
 
-# Create the stacked bar chart using Plotly
+# Create the horizontal stacked bar chart using Plotly
 fig = px.bar(
     plotly_df,
-    x="Strategy",
-    y="Laps",
+    y="Strategy",  # Strategies on the y-axis
+    x="Laps",      # Laps on the x-axis
     color="Tyre Type",
     color_discrete_map={  # Map tyre types to their respective colors
         "Soft": "#f95738",  # Soft: #f95738
@@ -108,15 +108,15 @@ fig = px.bar(
     title="Tyre Usage by Strategy",
     labels={"Laps": "Laps", "Strategy": "Strategy"},
     text="Laps",  # Display lap counts on the bars
+    orientation="h",  # Horizontal bar chart
 )
 
 # Update layout for better readability
 fig.update_layout(
     barmode="stack",
-    xaxis_title="Strategy",
-    yaxis_title="Laps",
+    yaxis_title="Strategy",
+    xaxis_title="Laps",
     legend_title="Tyre Type",
-    xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
     # Remove gridlines
     xaxis_showgrid=False,
     yaxis_showgrid=False,
