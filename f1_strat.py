@@ -108,7 +108,6 @@ fig = px.bar(
     title="Tyre Usage by Strategy",
     labels={"Laps": "Laps", "Strategy": "Strategy"},
     text="Laps",  # Display lap counts on the bars
-    orientation="h",
 )
 
 # Update layout for better readability
@@ -117,7 +116,16 @@ fig.update_layout(
     xaxis_title="Strategy",
     yaxis_title="Laps",
     legend_title="Tyre Type",
-    xaxis_tickangle=-45, 
+    xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
+    # Remove gridlines
+    xaxis_showgrid=False,
+    yaxis_showgrid=False,
+)
+
+# Add gray borders to the bars
+fig.update_traces(
+    marker_line_color="gray",  # Gray border
+    marker_line_width=1.5,     # Border width
 )
 
 # Display the chart
