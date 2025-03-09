@@ -7,9 +7,9 @@ LAP_DISTANCE = 5.303  # km
 TOTAL_LAPS = 58
 PIT_STOP_LOSS = 20  # seconds (time lost during a pit stop)
 TYRE_PERFORMANCE = {
-    "Soft": {"pace": 1.25, "lifespan": 20},  # pace in seconds per lap, lifespan in laps
-    "Medium": {"pace": 1.30, "lifespan": 30},
-    "Hard": {"pace": 1.35, "lifespan": 40},
+    "Soft": {"pace": 1.25, "lifespan": 20, "color": "red"},  # pace in seconds per lap, lifespan in laps
+    "Medium": {"pace": 1.30, "lifespan": 30, "color": "yellow"},
+    "Hard": {"pace": 1.35, "lifespan": 40, "color": "white"},
 }
 
 # Function to calculate total race time for a given strategy
@@ -62,6 +62,7 @@ for i, strategy in enumerate(strategies):
             "Strategy": strategy_names[i],
             "Total Race Time (s)": total_time,
             "Pit Stops": pit_stops,
+            "Tyre Segments": strategy,  # Store the tyre segments for visualization
         })
 
 # Convert results to a DataFrame
@@ -71,17 +72,42 @@ results_df = pd.DataFrame(results)
 st.write("### Race Strategy Results")
 st.dataframe(results_df)
 
-# Visualize the best strategy based on total race time
-st.write("### Best Strategy Visualization")
+# Visualize the strategies using a stacked bar chart
+st.write("### Tyre Usage Visualization (Stacked Bar Chart)")
 
-# Sort results by total race time
-results_df_sorted = results_df.sort_values(by="Total Race Time (s)")
+# Prepare data for the stacked bar chart
+strategy_labels = results_df["Strategy"]
+tyre_segments = results_df["Tyre Segments"]
 
-# Plot the results
+# Create a dictionary to store the lap counts for each tyre type in each strategy
+tyre_lap_counts = {tyre: [] for tyre in TYRE_PERFORMANCE.keys()}
+
+for strategy in tyre_segments:
+    for tyre in TYRE_PERFORMANCE.keys():
+        tyre_lap_counts[tyre].append(0)  # Initialize lap counts for each tyre
+
+    for segment in strategy:
+        tyre_type = segment[0]
+        lap_count = segment[1]
+        tyre_lap_counts[tyre_type][-1] += lap_count  # Add lap counts to the corresponding tyre
+
+# Create the stacked bar chart
 fig, ax = plt.subplots()
-ax.bar(results_df_sorted["Strategy"], results_df_sorted["Total Race Time (s)"], color="skyblue")
+bottom = None
+for tyre, color in TYRE_PERFORMANCE.items():
+    lap_counts = tyre_lap_counts[tyre]
+    ax.bar(strategy_labels, lap_counts, label=tyre, color=color, bottom=bottom)
+    if bottom is None:
+        bottom = lap_counts
+    else:
+        bottom = [b + lc for b, lc in zip(bottom, lap_counts)]
+
+# Add labels and title
 ax.set_xlabel("Strategy")
-ax.set_ylabel("Total Race Time (seconds)")
-ax.set_title("Total Race Time by Strategy")
+ax.set_ylabel("Laps")
+ax.set_title("Tyre Usage by Strategy")
+ax.legend(title="Tyre Type")
 plt.xticks(rotation=45, ha="right")
+
+# Display the chart
 st.pyplot(fig)
