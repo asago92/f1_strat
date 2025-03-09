@@ -108,7 +108,7 @@ fig = px.bar(
     title="Tyre Usage by Strategy",
     labels={"Laps": "Laps", "Strategy": "Strategy"},
     text="Laps",  # Display lap counts on the bars
-    use_container_width=True
+    orientation="h",
 )
 
 # Update layout for better readability
