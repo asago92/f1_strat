@@ -22,6 +22,9 @@ def calculate_race_time(strategy):
         if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
             # Pit stop required
             pit_stops += 1
+            if pit_stops >= len(strategy):
+                st.error("Strategy ran out of tyres! Cannot complete the race.")
+                return None, None
             total_time += PIT_STOP_LOSS
             current_tyre = strategy[pit_stops][0]
             laps_on_tyre = 0
@@ -58,35 +61,38 @@ strategy = strategies[strategy_index]
 # Calculate race time for the selected strategy
 total_time, pit_stops = calculate_race_time(strategy)
 
-# Display results
-st.write("### Results")
-st.write(f"**Selected Strategy:** {selected_strategy}")
-st.write(f"**Total Race Time:** {total_time:.2f} seconds")
-st.write(f"**Number of Pit Stops:** {pit_stops}")
+if total_time is not None:
+    # Display results
+    st.write("### Results")
+    st.write(f"**Selected Strategy:** {selected_strategy}")
+    st.write(f"**Total Race Time:** {total_time:.2f} seconds")
+    st.write(f"**Number of Pit Stops:** {pit_stops}")
 
-# Visualize tyre usage
-st.write("### Tyre Usage Over Laps")
-tyre_usage = []
-current_tyre = strategy[0][0]
-laps_on_tyre = 0
-pit_stop_laps = []
+    # Visualize tyre usage
+    st.write("### Tyre Usage Over Laps")
+    tyre_usage = []
+    current_tyre = strategy[0][0]
+    laps_on_tyre = 0
+    pit_stop_laps = []
 
-for lap in range(1, TOTAL_LAPS + 1):
-    if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
-        pit_stop_laps.append(lap)
-        current_tyre = strategy[len(pit_stop_laps)][0]
-        laps_on_tyre = 0
-    tyre_usage.append(current_tyre)
-    laps_on_tyre += 1
+    for lap in range(1, TOTAL_LAPS + 1):
+        if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
+            pit_stop_laps.append(lap)
+            if len(pit_stop_laps) >= len(strategy):
+                break  # Stop if we run out of tyres
+            current_tyre = strategy[len(pit_stop_laps)][0]
+            laps_on_tyre = 0
+        tyre_usage.append(current_tyre)
+        laps_on_tyre += 1
 
-# Plot tyre usage
+    # Plot tyre usage
 
-fig, ax = plt.subplots()
-ax.plot(range(1, TOTAL_LAPS + 1), [TYRE_PERFORMANCE[tyre]["pace"] for tyre in tyre_usage], label="Tyre Pace")
-ax.set_xlabel("Lap Number")
-ax.set_ylabel("Pace (seconds per lap)")
-ax.set_title("Tyre Performance Over Race Distance")
-for pit_lap in pit_stop_laps:
-    ax.axvline(x=pit_lap, color="red", linestyle="--", label="Pit Stop" if pit_lap == pit_stop_laps[0] else "")
-ax.legend()
-st.pyplot(fig)
+    fig, ax = plt.subplots()
+    ax.plot(range(1, len(tyre_usage) + 1), [TYRE_PERFORMANCE[tyre]["pace"] for tyre in tyre_usage], label="Tyre Pace")
+    ax.set_xlabel("Lap Number")
+    ax.set_ylabel("Pace (seconds per lap)")
+    ax.set_title("Tyre Performance Over Race Distance")
+    for pit_lap in pit_stop_laps:
+        ax.axvline(x=pit_lap, color="red", linestyle="--", label="Pit Stop" if pit_lap == pit_stop_laps[0] else "")
+    ax.legend()
+    st.pyplot(fig)
