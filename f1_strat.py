@@ -24,11 +24,12 @@ def calculate_race_time(strategy):
             # Pit stop required
             pit_stops += 1
             if pit_stops >= len(strategy):
-                st.error(f"Strategy {strategy} ran out of tyres! Cannot complete the race.")
-                return None, None
-            total_time += PIT_STOP_LOSS
-            current_tyre = strategy[pit_stops][0]
-            laps_on_tyre = 0
+                # If strategy runs out of tyres, continue with the last tyre
+                current_tyre = strategy[-1][0]
+                laps_on_tyre = 0
+            else:
+                current_tyre = strategy[pit_stops][0]
+                laps_on_tyre = 0
 
         total_time += TYRE_PERFORMANCE[current_tyre]["pace"]
         laps_on_tyre += 1
@@ -57,13 +58,14 @@ strategy_names = [
 results = []
 for i, strategy in enumerate(strategies):
     total_time, pit_stops = calculate_race_time(strategy)
-    if total_time is not None:
-        results.append({
-            "Strategy": strategy_names[i],
-            "Total Race Time (s)": total_time,
-            "Pit Stops": pit_stops,
-            "Tyre Segments": strategy,  # Store the tyre segments for visualization
-        })
+    # Convert tyre segments to a string representation
+    tyre_segments_str = " -> ".join([f"{tyre} ({laps} laps)" for tyre, laps in strategy])
+    results.append({
+        "Strategy": strategy_names[i],
+        "Total Race Time (s)": total_time,
+        "Pit Stops": pit_stops,
+        "Tyre Segments": tyre_segments_str,  # Store as a string
+    })
 
 # Convert results to a DataFrame
 results_df = pd.DataFrame(results)
@@ -79,7 +81,7 @@ st.write("### Tyre Usage Visualization (Stacked Bar Chart)")
 plotly_data = []
 for i, row in results_df.iterrows():
     strategy_name = row["Strategy"]
-    tyre_segments = row["Tyre Segments"]
+    tyre_segments = strategies[i]  # Use the original strategy list
     for segment in tyre_segments:
         tyre_type = segment[0]
         lap_count = segment[1]
