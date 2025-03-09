@@ -116,7 +116,8 @@ fig.update_layout(
     xaxis_title="Strategy",
     yaxis_title="Laps",
     legend_title="Tyre Type",
-    xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
+    xaxis_tickangle=-45, 
+    use_container-width =True
 )
 
 # Display the chart
