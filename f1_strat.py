@@ -1,6 +1,6 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
 # Constants
 LAP_DISTANCE = 5.303  # km
@@ -72,42 +72,50 @@ results_df = pd.DataFrame(results)
 st.write("### Race Strategy Results")
 st.dataframe(results_df)
 
-# Visualize the strategies using a stacked bar chart
+# Prepare data for the stacked bar chart
 st.write("### Tyre Usage Visualization (Stacked Bar Chart)")
 
-# Prepare data for the stacked bar chart
-strategy_labels = results_df["Strategy"]
-tyre_segments = results_df["Tyre Segments"]
-
-# Create a dictionary to store the lap counts for each tyre type in each strategy
-tyre_lap_counts = {tyre: [] for tyre in TYRE_PERFORMANCE.keys()}
-
-for strategy in tyre_segments:
-    for tyre in TYRE_PERFORMANCE.keys():
-        tyre_lap_counts[tyre].append(0)  # Initialize lap counts for each tyre
-
-    for segment in strategy:
+# Create a DataFrame for Plotly
+plotly_data = []
+for i, row in results_df.iterrows():
+    strategy_name = row["Strategy"]
+    tyre_segments = row["Tyre Segments"]
+    for segment in tyre_segments:
         tyre_type = segment[0]
         lap_count = segment[1]
-        tyre_lap_counts[tyre_type][-1] += lap_count  # Add lap counts to the corresponding tyre
+        plotly_data.append({
+            "Strategy": strategy_name,
+            "Tyre Type": tyre_type,
+            "Laps": lap_count,
+            "Color": TYRE_PERFORMANCE[tyre_type]["color"],
+        })
 
-# Create the stacked bar chart
-fig, ax = plt.subplots()
-bottom = None
-for tyre, color in TYRE_PERFORMANCE.items():
-    lap_counts = tyre_lap_counts[tyre]
-    ax.bar(strategy_labels, lap_counts, label=tyre, color=color, bottom=bottom)
-    if bottom is None:
-        bottom = lap_counts
-    else:
-        bottom = [b + lc for b, lc in zip(bottom, lap_counts)]
+plotly_df = pd.DataFrame(plotly_data)
 
-# Add labels and title
-ax.set_xlabel("Strategy")
-ax.set_ylabel("Laps")
-ax.set_title("Tyre Usage by Strategy")
-ax.legend(title="Tyre Type")
-plt.xticks(rotation=45, ha="right")
+# Create the stacked bar chart using Plotly
+fig = px.bar(
+    plotly_df,
+    x="Strategy",
+    y="Laps",
+    color="Tyre Type",
+    color_discrete_map={  # Map tyre types to their respective colors
+        "Soft": "red",
+        "Medium": "yellow",
+        "Hard": "white",
+    },
+    title="Tyre Usage by Strategy",
+    labels={"Laps": "Laps", "Strategy": "Strategy"},
+    text="Laps",  # Display lap counts on the bars
+)
+
+# Update layout for better readability
+fig.update_layout(
+    barmode="stack",
+    xaxis_title="Strategy",
+    yaxis_title="Laps",
+    legend_title="Tyre Type",
+    xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
+)
 
 # Display the chart
-st.pyplot(fig)
+st.plotly_chart(fig, use_container_width=True)
