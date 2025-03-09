@@ -108,6 +108,7 @@ fig = px.bar(
     title="Tyre Usage by Strategy",
     labels={"Laps": "Laps", "Strategy": "Strategy"},
     text="Laps",  # Display lap counts on the bars
+    use_container_width=True
 )
 
 # Update layout for better readability
@@ -117,7 +118,6 @@ fig.update_layout(
     yaxis_title="Laps",
     legend_title="Tyre Type",
     xaxis_tickangle=-45, 
-    use_container_width=True
 )
 
 # Display the chart
