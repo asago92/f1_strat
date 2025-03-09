@@ -1,5 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Constants
 LAP_DISTANCE = 5.303  # km
@@ -23,7 +24,7 @@ def calculate_race_time(strategy):
             # Pit stop required
             pit_stops += 1
             if pit_stops >= len(strategy):
-                st.error("Strategy ran out of tyres! Cannot complete the race.")
+                st.error(f"Strategy {strategy} ran out of tyres! Cannot complete the race.")
                 return None, None
             total_time += PIT_STOP_LOSS
             current_tyre = strategy[pit_stops][0]
@@ -45,54 +46,42 @@ strategies = [
     [("Medium", 30), ("Hard", 28)],  # Alternative one-stop strategy
 ]
 
-# Display strategy options
-st.write("### Select a Strategy")
+# Strategy names for display
 strategy_names = [
     "One-Stop: Soft -> Medium",
     "Two-Stop: Soft -> Soft -> Medium",
     "One-Stop: Medium -> Hard",
 ]
-selected_strategy = st.selectbox("Choose a strategy:", strategy_names)
 
-# Map selected strategy to the corresponding strategy list
-strategy_index = strategy_names.index(selected_strategy)
-strategy = strategies[strategy_index]
+# Calculate race time for all strategies
+results = []
+for i, strategy in enumerate(strategies):
+    total_time, pit_stops = calculate_race_time(strategy)
+    if total_time is not None:
+        results.append({
+            "Strategy": strategy_names[i],
+            "Total Race Time (s)": total_time,
+            "Pit Stops": pit_stops,
+        })
 
-# Calculate race time for the selected strategy
-total_time, pit_stops = calculate_race_time(strategy)
+# Convert results to a DataFrame
+results_df = pd.DataFrame(results)
 
-if total_time is not None:
-    # Display results
-    st.write("### Results")
-    st.write(f"**Selected Strategy:** {selected_strategy}")
-    st.write(f"**Total Race Time:** {total_time:.2f} seconds")
-    st.write(f"**Number of Pit Stops:** {pit_stops}")
+# Display results in a table
+st.write("### Race Strategy Results")
+st.dataframe(results_df)
 
-    # Visualize tyre usage
-    st.write("### Tyre Usage Over Laps")
-    tyre_usage = []
-    current_tyre = strategy[0][0]
-    laps_on_tyre = 0
-    pit_stop_laps = []
+# Visualize the best strategy based on total race time
+st.write("### Best Strategy Visualization")
 
-    for lap in range(1, TOTAL_LAPS + 1):
-        if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
-            pit_stop_laps.append(lap)
-            if len(pit_stop_laps) >= len(strategy):
-                break  # Stop if we run out of tyres
-            current_tyre = strategy[len(pit_stop_laps)][0]
-            laps_on_tyre = 0
-        tyre_usage.append(current_tyre)
-        laps_on_tyre += 1
+# Sort results by total race time
+results_df_sorted = results_df.sort_values(by="Total Race Time (s)")
 
-    # Plot tyre usage
-
-    fig, ax = plt.subplots()
-    ax.plot(range(1, len(tyre_usage) + 1), [TYRE_PERFORMANCE[tyre]["pace"] for tyre in tyre_usage], label="Tyre Pace")
-    ax.set_xlabel("Lap Number")
-    ax.set_ylabel("Pace (seconds per lap)")
-    ax.set_title("Tyre Performance Over Race Distance")
-    for pit_lap in pit_stop_laps:
-        ax.axvline(x=pit_lap, color="red", linestyle="--", label="Pit Stop" if pit_lap == pit_stop_laps[0] else "")
-    ax.legend()
-    st.pyplot(fig)
+# Plot the results
+fig, ax = plt.subplots()
+ax.bar(results_df_sorted["Strategy"], results_df_sorted["Total Race Time (s)"], color="skyblue")
+ax.set_xlabel("Strategy")
+ax.set_ylabel("Total Race Time (seconds)")
+ax.set_title("Total Race Time by Strategy")
+plt.xticks(rotation=45, ha="right")
+st.pyplot(fig)
