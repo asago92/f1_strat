@@ -117,7 +117,7 @@ fig.update_layout(
     yaxis_title="Laps",
     legend_title="Tyre Type",
     xaxis_tickangle=-45, 
-    use_container-width =True
+    use_container_width=True
 )
 
 # Display the chart
