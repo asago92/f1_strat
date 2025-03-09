@@ -7,9 +7,9 @@ LAP_DISTANCE = 5.303  # km
 TOTAL_LAPS = 58
 PIT_STOP_LOSS = 20  # seconds (time lost during a pit stop)
 TYRE_PERFORMANCE = {
-    "Soft": {"pace": 1.25, "lifespan": 20, "color": #F95738},  # pace in seconds per lap, lifespan in laps
-    "Medium": {"pace": 1.30, "lifespan": 30, "color": #f4d35e},
-    "Hard": {"pace": 1.35, "lifespan": 40, "color": #ebebd3},
+    "Soft": {"pace": 1.25, "lifespan": 20, "color": F95738},  # pace in seconds per lap, lifespan in laps
+    "Medium": {"pace": 1.30, "lifespan": 30, "color": f4d35e},
+    "Hard": {"pace": 1.35, "lifespan": 40, "color": ebebd3},
 }
 
 # Function to calculate total race time for a given strategy
