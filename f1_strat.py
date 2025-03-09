@@ -1,23 +1,26 @@
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 
 # Constants
+LAP_DISTANCE = 5.303  # km
+TOTAL_LAPS = 58
 PIT_STOP_LOSS = 20  # seconds (time lost during a pit stop)
 TYRE_PERFORMANCE = {
-    "Soft": {"pace": 1.25, "lifespan": 20},
+    "Soft": {"pace": 1.25, "lifespan": 20},  # pace in seconds per lap, lifespan in laps
     "Medium": {"pace": 1.30, "lifespan": 30},
     "Hard": {"pace": 1.35, "lifespan": 40},
 }
 
-def calculate_race_time(strategy, total_laps):
+# Function to calculate total race time for a given strategy
+def calculate_race_time(strategy):
     total_time = 0
     current_tyre = strategy[0][0]
     laps_on_tyre = 0
     pit_stops = 0
 
-    for lap in range(1, total_laps + 1):
+    for lap in range(1, TOTAL_LAPS + 1):
         if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
+            # Pit stop required
             pit_stops += 1
             total_time += PIT_STOP_LOSS
             current_tyre = strategy[pit_stops][0]
@@ -28,34 +31,62 @@ def calculate_race_time(strategy, total_laps):
 
     return total_time, pit_stops
 
-# Streamlit UI
-st.title("F1 Tyre and Race Strategy Analyzer")
+# Streamlit App
+st.title("F1 Race Strategy Simulator")
+st.subheader("Melbourne Grand Prix Circuit")
 
-# User inputs
-lap_distance = st.number_input("Lap Distance (km)", min_value=3.0, max_value=7.0, value=5.303, step=0.1)
-total_laps = st.number_input("Total Laps", min_value=40, max_value=80, value=58, step=1)
+# Define possible strategies
+strategies = [
+    [("Soft", 25), ("Medium", 33)],  # One-stop strategy
+    [("Soft", 15), ("Soft", 20), ("Medium", 23)],  # Two-stop strategy
+    [("Medium", 30), ("Hard", 28)],  # Alternative one-stop strategy
+]
 
-st.subheader("Enter Race Strategies")
-num_stints = st.number_input("Number of Stints", min_value=1, max_value=5, value=2, step=1)
+# Display strategy options
+st.write("### Select a Strategy")
+strategy_names = [
+    "One-Stop: Soft -> Medium",
+    "Two-Stop: Soft -> Soft -> Medium",
+    "One-Stop: Medium -> Hard",
+]
+selected_strategy = st.selectbox("Choose a strategy:", strategy_names)
 
-strategy = []
-for i in range(num_stints):
-    tyre_choice = st.selectbox(f"Tyre for Stint {i+1}", options=["Soft", "Medium", "Hard"], key=f"tyre_{i}")
-    stint_laps = st.number_input(f"Laps on {tyre_choice}", min_value=1, max_value=total_laps, value=20, step=1, key=f"laps_{i}")
-    strategy.append((tyre_choice, stint_laps))
+# Map selected strategy to the corresponding strategy list
+strategy_index = strategy_names.index(selected_strategy)
+strategy = strategies[strategy_index]
 
-if st.button("Analyze Strategy"):
-    total_time, pit_stops = calculate_race_time(strategy, total_laps)
-    st.write(f"### Strategy Results")
-    st.write(f"Total Race Time: {total_time:.2f} seconds")
-    st.write(f"Number of Pit Stops: {pit_stops}")
+# Calculate race time for the selected strategy
+total_time, pit_stops = calculate_race_time(strategy)
 
-    # Visualization
-    labels = [f"Stint {i+1}\n({tyre}, {laps} laps)" for i, (tyre, laps) in enumerate(strategy)]
-    times = [TYRE_PERFORMANCE[tyre]["pace"] * laps for tyre, laps in strategy]
-    
-    fig, ax = plt.subplots()
-    ax.bar(labels, times, color=["red", "yellow", "blue"][:len(labels)])
-    ax.set_ylabel("Total Time (seconds)")
-    ax.set_title("Race Strategy Breakdown")
-    st.pyplot(fig)
+# Display results
+st.write("### Results")
+st.write(f"**Selected Strategy:** {selected_strategy}")
+st.write(f"**Total Race Time:** {total_time:.2f} seconds")
+st.write(f"**Number of Pit Stops:** {pit_stops}")
+
+# Visualize tyre usage
+st.write("### Tyre Usage Over Laps")
+tyre_usage = []
+current_tyre = strategy[0][0]
+laps_on_tyre = 0
+pit_stop_laps = []
+
+for lap in range(1, TOTAL_LAPS + 1):
+    if laps_on_tyre >= TYRE_PERFORMANCE[current_tyre]["lifespan"]:
+        pit_stop_laps.append(lap)
+        current_tyre = strategy[len(pit_stop_laps)][0]
+        laps_on_tyre = 0
+    tyre_usage.append(current_tyre)
+    laps_on_tyre += 1
+
+# Plot tyre usage
+
+fig, ax = plt.subplots()
+ax.plot(range(1, TOTAL_LAPS + 1), [TYRE_PERFORMANCE[tyre]["pace"] for tyre in tyre_usage], label="Tyre Pace")
+ax.set_xlabel("Lap Number")
+ax.set_ylabel("Pace (seconds per lap)")
+ax.set_title("Tyre Performance Over Race Distance")
+for pit_lap in pit_stop_laps:
+    ax.axvline(x=pit_lap, color="red", linestyle="--", label="Pit Stop" if pit_lap == pit_stop_laps[0] else "")
+ax.legend()
+st.pyplot(fig)
